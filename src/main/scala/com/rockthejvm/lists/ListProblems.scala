@@ -42,6 +42,11 @@ sealed abstract class RList[+T] {
 
   // random sample
   def sample(k: Int): RList[T]
+
+  /**
+   * Hard problems
+   */
+  def sorted[S >: T](ordering: Ordering[S]): RList[S]
 }
 
 case object RNil extends RList[Nothing] {
@@ -77,6 +82,8 @@ case object RNil extends RList[Nothing] {
   override def rotate(k: Int): RList[Nothing] = RNil
 
   override def sample(k: Int): RList[Nothing] = RNil
+
+  override def sorted[S >: Nothing](ordering: Ordering[S]): RList[S] = RNil
 }
 
 final case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T] {
@@ -260,6 +267,23 @@ final case class ::[+T](override val head: T, override val tail: RList[T]) exten
     if (k < 0) RNil
     else sampleTailrec(k, RNil)
   }
+
+  def sorted[S >: T](ordering: Ordering[S]): RList[S] = {
+    @tailrec
+    def insertSortTailrec(remaining: RList[S], acc: RList[S]): RList[S] = {
+      if (remaining.isEmpty) acc.reverse
+      else insertSortTailrec(remaining.tail, insertTailRec(remaining.head, acc, RNil))
+    }
+
+    @tailrec
+    def insertTailRec(s: S, sortedList: RList[S], acc: RList[S]): RList[S] = {
+      if (sortedList.isEmpty) (s :: acc).reverse
+      else if (ordering.lt(s, sortedList.head)) insertTailRec(s, sortedList.tail, sortedList.head :: acc)
+      else acc.reverse ++ (s :: sortedList)
+    }
+
+    insertSortTailrec(this, RNil)
+  }
 }
 
 object RList {
@@ -311,8 +335,11 @@ object ListProblems extends App {
 
   }
 
+  val aDuplicatedList = 1 :: 1 :: 1 :: 2 :: 2 :: 3 :: 4 :: 4 :: 5 :: 6 :: 6 :: RNil
+
+  val outOfOrderList = 25 :: 4 :: 10 :: 1 :: 3 :: RNil
+
   def testMediumFunctions() = {
-    val aDuplicatedList = 1 :: 1 :: 1 :: 2 :: 2 :: 3 :: 4 :: 4 :: 5 :: 6 :: 6 :: RNil
     // test rle
     println(aDuplicatedList.rle)
 
@@ -332,5 +359,16 @@ object ListProblems extends App {
     println(aSmallList.sample(10))
   }
 
-  testMediumFunctions()
+  val ordering = Ordering.fromLessThan[Int](_ < _)
+  def testHardFunctions() = {
+    // test sorted
+    println("test sorted")
+    println(outOfOrderList.sorted(Ordering.Int))
+    // println(aLargeList.reverse.sorted(ordering))
+    println(aLargeList.sample(30).sorted(ordering))
+  }
+
+  // testMediumFunctions()
+
+  testHardFunctions()
 }

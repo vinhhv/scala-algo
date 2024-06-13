@@ -35,6 +35,9 @@ sealed abstract class RList[+T] {
 
   // duplicate each element a number of times in a row
   def duplicateEach(k: Int): RList[T]
+
+  // rotation by a number of positions to the left
+  def rotate(k: Int): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -66,6 +69,8 @@ case object RNil extends RList[Nothing] {
   override def rle: RList[(Nothing, Int)] = RNil
 
   override def duplicateEach(k: Int): RList[Nothing] = RNil
+
+  override def rotate(k: Int): RList[Nothing] = RNil
 }
 
 final case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T] {
@@ -193,6 +198,18 @@ final case class ::[+T](override val head: T, override val tail: RList[T]) exten
     if (k > 0) duplicateEachTailrec(this, 0, RNil).reverse
     else this
   }
+
+  override def rotate(k: Int): RList[T] = {
+    @tailrec
+    def rotateTailrec(remaining: RList[T], rotationsLeft: Int, acc: RList[T]): RList[T] = {
+      if (remaining.isEmpty) acc
+      else if (rotationsLeft > 0) rotateTailrec(remaining.tail, rotationsLeft - 1, remaining.head :: acc)
+      else remaining ++ acc.reverse
+    }
+
+    if (k < 0) this
+    else rotateTailrec(this, k % this.length, RNil)
+  }
 }
 
 object RList {
@@ -251,6 +268,14 @@ object ListProblems extends App {
 
     // test duplicateEach
     println(aSmallList.duplicateEach(3))
+
+    // test rotate
+    println("testing rotate")
+    println(aSmallList.rotate(0))
+    println(aSmallList.rotate(1))
+    println(aSmallList.rotate(2))
+    println(aSmallList.rotate(3))
+    println(aSmallList.rotate(4))
   }
 
   testMediumFunctions()

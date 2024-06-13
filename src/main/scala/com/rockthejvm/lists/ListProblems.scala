@@ -167,7 +167,20 @@ final case class ::[+T](override val head: T, override val tail: RList[T]) exten
       else flatMapTailrec(remaining.tail, f(remaining.head).reverse ++ acc)
     }
 
-    flatMapTailrec(this, RNil)
+    @tailrec
+    def betterFlatMap(remaining: RList[T], acc: RList[RList[S]]): RList[S] = {
+      if (remaining.isEmpty) concatenateAll(acc, RNil, RNil)
+      else betterFlatMap(remaining.tail, f(remaining.head).reverse :: acc)
+    }
+
+    @tailrec
+    def concatenateAll(elements: RList[RList[S]], currentList: RList[S], acc: RList[S]): RList[S] = {
+      if (currentList.isEmpty && elements.isEmpty) acc
+      else if (currentList.isEmpty) concatenateAll(elements.tail, elements.head, acc)
+      else concatenateAll(elements, currentList.tail, currentList.head :: acc)
+    }
+
+    betterFlatMap(this, RNil)
   }
 
   override def filter(f: T => Boolean): RList[T] = {

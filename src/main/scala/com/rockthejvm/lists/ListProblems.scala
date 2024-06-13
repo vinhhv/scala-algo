@@ -1,6 +1,7 @@
 package com.rockthejvm.lists
 
 import scala.annotation.tailrec
+import scala.util.Random
 
 sealed abstract class RList[+T] {
   def head: T
@@ -38,6 +39,9 @@ sealed abstract class RList[+T] {
 
   // rotation by a number of positions to the left
   def rotate(k: Int): RList[T]
+
+  // random sample
+  def sample(k: Int): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -71,6 +75,8 @@ case object RNil extends RList[Nothing] {
   override def duplicateEach(k: Int): RList[Nothing] = RNil
 
   override def rotate(k: Int): RList[Nothing] = RNil
+
+  override def sample(k: Int): RList[Nothing] = RNil
 }
 
 final case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T] {
@@ -210,6 +216,37 @@ final case class ::[+T](override val head: T, override val tail: RList[T]) exten
     if (k < 0) this
     else rotateTailrec(this, k % this.length, RNil)
   }
+
+  override def sample(k: Int): RList[T] = {
+    val random   = new Random(System.currentTimeMillis())
+    val maxIndex = this.length
+
+    @tailrec
+    def sampleTailrec(nRemaining: Int, acc: RList[T]): RList[T] = {
+      if (nRemaining == 0) acc
+      else {
+        val index   = random.nextInt(maxIndex)
+        val newItem = this(index)
+        sampleTailrec(nRemaining - 1, newItem :: acc)
+      }
+    }
+    // def sampleTailrec(remaining: RList[T], count: Int, acc: RList[T]): RList[T] = {
+    //   if (count == k) acc
+    //   else if (remaining.isEmpty) sampleTailrec(this, count, acc)
+    //   else {
+    //     val randomNumber = Random.between(0, k)
+    //     if (randomNumber == 0) sampleTailrec(remaining.tail, count + 1, remaining.head :: acc)
+    //     else sampleTailrec(remaining.tail, count, acc)
+    //   }
+    // }
+
+    def sampleElegant: RList[T] =
+      RList.from((1 to k).map(_ => random.nextInt(maxIndex)).map(index => this(index)))
+
+    // sampleTailrec(this, 0, RNil)
+    if (k < 0) RNil
+    else sampleTailrec(k, RNil)
+  }
 }
 
 object RList {
@@ -276,6 +313,10 @@ object ListProblems extends App {
     println(aSmallList.rotate(2))
     println(aSmallList.rotate(3))
     println(aSmallList.rotate(4))
+
+    // test sample
+    println("test sample")
+    println(aSmallList.sample(10))
   }
 
   testMediumFunctions()

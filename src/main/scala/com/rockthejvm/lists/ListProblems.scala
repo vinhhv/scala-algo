@@ -26,6 +26,12 @@ sealed abstract class RList[+T] {
   def map[S](f: T => S): RList[S]
   def flatMap[S](f: T => RList[S]): RList[S]
   def filter(f: T => Boolean): RList[T]
+  
+  /**
+   *  Medium problems
+   */
+  // run-length encoding
+  def rle: RList[(T, Int)]
 }
 
 case object RNil extends RList[Nothing] {
@@ -53,6 +59,8 @@ case object RNil extends RList[Nothing] {
   override def flatMap[S](f: Nothing => RList[S]): RList[S] = RNil
 
   override def filter(f: Nothing => Boolean): RList[Nothing] = RNil
+  
+  override def rle: RList[(Nothing, Int)] = RNil
 }
 
 final case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T] {
@@ -156,6 +164,18 @@ final case class ::[+T](override val head: T, override val tail: RList[T]) exten
     
     filterTailrec(this, RNil)
   }
+  
+  override def rle: RList[(T, Int)] = {
+    @tailrec
+    def rleTailrec(remaining: RList[T], t: T, count: Int, acc: RList[(T, Int)]): RList[(T, Int)] = {
+      if (remaining.isEmpty) (t, count) :: acc
+      else if (remaining.head != t) rleTailrec(remaining.tail, remaining.head, 1, (t, count) :: acc)
+      else rleTailrec(remaining.tail, t, count + 1, acc)
+    }
+    
+    if (this.isEmpty) RNil
+    else rleTailrec(this.tail, this.head, 1, RNil).reverse
+  }
 }
 
 object RList {
@@ -174,35 +194,46 @@ object ListProblems extends App {
   val aSmallList = 1 :: 2 :: 3 :: RNil
   val aLargeList = RList.from(1 to 10000)
 
-  println(aSmallList)
+  def testEasyFunctions() = {
+    println(aSmallList)
+    
+    // test get-kth
+    println(aSmallList.apply(0))
+    println(aSmallList.apply(2))
+    println(aLargeList.apply(8735))
+    
+    // test length
+    println(aSmallList.length)
+    println(aLargeList.length)
+    
+    // test reverse
+    println(aSmallList.reverse)
+    // println(aLargeList.reverse)
+    
+    // test concat
+    // println(aSmallList ++ aLargeList)
+    
+    // test removeAt
+    println(aSmallList.removeAt(1))
+    
+    // test map
+    println(aSmallList.map(_ * 2))
+    
+    
+    // test flatMap
+    println(aSmallList.flatMap(i => (i * 2) :: (i * 3) :: RNil))
+    
+    // test filter
+    println(aSmallList.filter(_ == 2))
   
-  // test get-kth
-  println(aSmallList.apply(0))
-  println(aSmallList.apply(2))
-  println(aLargeList.apply(8735))
+  }
   
-  // test length
-  println(aSmallList.length)
-  println(aLargeList.length)
+  def testMediumFunctions() = {
+    val aDuplicatedList = 1 :: 1 :: 1 :: 2 :: 2 :: 3 :: 4 :: 4 :: 5 :: 6 :: 6 :: RNil
+    // test rle
+    println(aDuplicatedList.rle)
+  }
   
-  // test reverse
-  println(aSmallList.reverse)
-  // println(aLargeList.reverse)
-  
-  // test concat
-  // println(aSmallList ++ aLargeList)
-  
-  // test removeAt
-  println(aSmallList.removeAt(1))
-  
-  // test map
-  println(aSmallList.map(_ * 2))
-  
-  
-  // test flatMap
-  println(aSmallList.flatMap(i => (i * 2) :: (i * 3) :: RNil))
-  
-  // test filter
-  println(aSmallList.filter(_ == 2))
+  testMediumFunctions()
 }
 

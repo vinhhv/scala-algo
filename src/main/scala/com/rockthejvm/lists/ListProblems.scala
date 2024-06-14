@@ -49,6 +49,8 @@ sealed abstract class RList[+T] {
   def insertionSort[S >: T](ordering: Ordering[S]): RList[S]
 
   def mergeSort[S >: T](ordering: Ordering[S]): RList[S]
+
+  def quickSort[S >: T](ordering: Ordering[S]): RList[S]
 }
 
 case object RNil extends RList[Nothing] {
@@ -88,6 +90,8 @@ case object RNil extends RList[Nothing] {
   override def insertionSort[S >: Nothing](ordering: Ordering[S]): RList[Nothing] = RNil
 
   override def mergeSort[S >: Nothing](ordering: Ordering[S]): RList[Nothing] = RNil
+
+  override def quickSort[S >: Nothing](ordering: Ordering[S]): RList[Nothing] = RNil
 }
 
 final case class ::[+T](override val head: T, override val tail: RList[T]) extends RList[T] {
@@ -317,6 +321,30 @@ final case class ::[+T](override val head: T, override val tail: RList[T]) exten
 
     mergeSortTailrec(this.map(s => s :: RNil), RNil)
   }
+
+  def quickSort[S >: T](ordering: Ordering[S]): RList[S] = {
+    def partition(list: RList[T], pivot: T, smaller: RList[T], larger: RList[T]): (RList[T], RList[T]) = {
+      if (list.isEmpty) (smaller, larger)
+      else if (ordering.lteq(list.head, pivot)) partition(list.tail, pivot, list.head :: smaller, larger)
+      else partition(list.tail, pivot, smaller, list.head :: larger)
+    }
+
+    @tailrec
+    def quickSortTailrec(remainingLists: RList[RList[T]], acc: RList[RList[T]]): RList[T] = {
+      if (remainingLists.isEmpty) acc.flatMap(smallList => smallList).reverse
+      else if (remainingLists.head.isEmpty) quickSortTailrec(remainingLists.tail, acc)
+      else if (remainingLists.tail.isEmpty) quickSortTailrec(remainingLists.tail, remainingLists.head :: acc)
+      else {
+        val list              = remainingLists.head
+        val pivot             = list.head
+        val listToSplit       = list.tail
+        val (smaller, larger) = partition(listToSplit, pivot, RNil, RNil)
+        quickSortTailrec(smaller :: (pivot :: RNil) :: larger :: remainingLists.tail, acc)
+      }
+    }
+
+    quickSortTailrec(this :: RNil, RNil)
+  }
 }
 
 object RList {
@@ -404,6 +432,10 @@ object ListProblems extends App {
     println("testing merge sort")
     println(aLargeList.sample(30).mergeSort(ordering))
     println((3 :: RNil).mergeSort(ordering))
+
+    // test quick sort
+    println("testing quick sort")
+    println(aLargeList.sample(10).quickSort(ordering))
   }
 
   // testMediumFunctions()

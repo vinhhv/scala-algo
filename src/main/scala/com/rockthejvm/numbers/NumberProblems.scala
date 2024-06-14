@@ -1,0 +1,43 @@
+package com.rockthejvm.numbers
+
+import scala.annotation.tailrec
+
+object NumberProblems extends App {
+
+  def isPrime(n: Int): Boolean = {
+    def isPrimeTailrec(currentDivisor: Int): Boolean = {
+      if (currentDivisor > Math.sqrt(Math.abs(n))) true
+      else n % currentDivisor != 0 && isPrimeTailrec(currentDivisor + 1)
+    }
+
+    if (n == 0 || Math.abs(n) == 1) false
+    else isPrimeTailrec(2)
+  }
+
+  // the constituent prime divisors
+  def decompose(n: Int): List[Int] = {
+    assert(n > 0)
+    // (2 to Math.sqrt(Math.abs(n)).toInt).toList.flatMap { i =>
+    //   if (n % i == 0) {
+    //     val iPrime  = if (isPrime(i)) List(i) else List()
+    //     val niPrime = if (isPrime(n / i)) List(n / i) else List()
+    //     iPrime ++ niPrime
+    //   } else List()
+    // }
+
+    @tailrec
+    def decomposeTailrec(remaining: Int, currentDivisor: Int, acc: List[Int]): List[Int] = {
+      if (currentDivisor > Math.sqrt(remaining)) remaining :: acc
+      else if (remaining % currentDivisor == 0)
+        decomposeTailrec(remaining / currentDivisor, currentDivisor, currentDivisor :: acc)
+      else decomposeTailrec(remaining, currentDivisor + 1, acc)
+    }
+
+    decomposeTailrec(n, 2, List())
+  }
+
+  println(isPrime(13))
+  println(decompose(64))
+  println(decompose(26))
+
+}

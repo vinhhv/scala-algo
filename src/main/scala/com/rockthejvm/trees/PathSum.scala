@@ -30,6 +30,28 @@ object PathSum extends App {
     // else stackR(tree)
   }
 
+  def findSumPaths(tree: Tree[Int], target: Int): List[List[Int]] = {
+    @tailrec
+    def tailR(
+        queue: List[(Tree[Int], Int, List[Int])],
+        paths: List[List[Int]] = List()
+    ): List[List[Int]] = {
+      if (queue.isEmpty) paths
+      else if (queue.head._1.isEmpty) tailR(queue.tail, paths)
+      else {
+        val node    = queue.head._1
+        val nodeSum = queue.head._2 + node.value
+        val path    = node.value :: queue.head._3
+
+        if (node.isLeaf && nodeSum == target) tailR(queue.tail, path.reverse :: paths)
+        else tailR((node.left, nodeSum, path) :: (node.right, nodeSum, path) :: queue.tail, paths)
+      }
+    }
+
+    if (tree.isEmpty) List()
+    else tailR(List((tree, 0, List())))
+  }
+
   val tree =
     Node(1, Node(2, Node(3, End, End), Node(4, End, Node(5, End, End))), Node(6, Node(7, End, End), Node(8, End, End)))
 
@@ -43,6 +65,6 @@ object PathSum extends App {
   val twoPathsto6 =
     Node(1, Node(2, Node(3, End, End), Node(4, End, Node(-1, End, End))), Node(6, Node(7, End, End), Node(8, End, End)))
 
-  // println(findSumPaths(twoPathsto6, 6))
-  // println(findSumPaths(twoPathsto6, 7))
+  println(findSumPaths(twoPathsto6, 6))
+  println(findSumPaths(twoPathsto6, 7))
 }

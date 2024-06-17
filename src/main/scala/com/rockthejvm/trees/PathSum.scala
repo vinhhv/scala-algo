@@ -31,25 +31,55 @@ object PathSum extends App {
   }
 
   def findSumPaths(tree: Tree[Int], target: Int): List[List[Int]] = {
-    @tailrec
-    def tailR(
-        queue: List[(Tree[Int], Int, List[Int])],
-        paths: List[List[Int]] = List()
-    ): List[List[Int]] = {
-      if (queue.isEmpty) paths
-      else if (queue.head._1.isEmpty) tailR(queue.tail, paths)
-      else {
-        val node    = queue.head._1
-        val nodeSum = queue.head._2 + node.value
-        val path    = node.value :: queue.head._3
+    // @tailrec
+    // def tailR(
+    //     queue: List[(Tree[Int], Int, List[Int])],
+    //     paths: List[List[Int]] = List()
+    // ): List[List[Int]] = {
+    //   if (queue.isEmpty) paths
+    //   else if (queue.head._1.isEmpty) tailR(queue.tail, paths)
+    //   else {
+    //     val node    = queue.head._1
+    //     val nodeSum = queue.head._2 + node.value
+    //     val path    = node.value :: queue.head._3
 
-        if (node.isLeaf && nodeSum == target) tailR(queue.tail, path.reverse :: paths)
-        else tailR((node.left, nodeSum, path) :: (node.right, nodeSum, path) :: queue.tail, paths)
+    //     if (node.isLeaf && nodeSum == target) tailR(queue.tail, path.reverse :: paths)
+    //     else tailR((node.left, nodeSum, path) :: (node.right, nodeSum, path) :: queue.tail, paths)
+    //   }
+    // }
+
+    // if (tree.isEmpty) List()
+    // else tailR(List((tree, 0, List())))
+
+    @tailrec
+    def recurse(
+        queue: List[Tree[Int]],
+        targets: List[Int],
+        path: List[Int],
+        visited: Set[Tree[Int]],
+        result: List[List[Int]]
+    ): List[List[Int]] = {
+      if (queue.isEmpty) result
+      else {
+        val node          = queue.head
+        val currentTarget = targets.head
+
+        val children        = List(node.left, node.right).filter(!_.isEmpty)
+        val childrenTargets = children.map(_ => currentTarget - node.value)
+
+        if (node.isLeaf)
+          if (currentTarget == node.value)
+            recurse(queue.tail, targets.tail, path, visited, (node.value :: path).reverse :: result)
+          else
+            recurse(queue.tail, targets.tail, path, visited, result)
+        else if (visited.contains(node))
+          recurse(queue.tail, targets.tail, path.tail, visited, result)
+        else
+          recurse(children ++ queue, childrenTargets ++ targets, node.value :: path, visited + node, result)
       }
     }
 
-    if (tree.isEmpty) List()
-    else tailR(List((tree, 0, List())))
+    recurse(List(tree), List(target), List(), Set(), List())
   }
 
   val tree =

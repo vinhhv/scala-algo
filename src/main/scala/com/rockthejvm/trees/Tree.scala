@@ -2,17 +2,17 @@ package com.rockthejvm.trees
 
 import scala.annotation.tailrec
 
-sealed abstract class BTree[+T] {
+sealed abstract class Tree[+T] {
   def value: T
-  def left: BTree[T]
-  def right: BTree[T]
+  def left: Tree[T]
+  def right: Tree[T]
   def isEmpty: Boolean
 
   /**
     * Easy problems
     */
   def isLeaf: Boolean
-  def collectLeaves: List[BTree[T]]
+  def collectLeaves: List[Tree[T]]
   def leafCount: Int
 
   /**
@@ -20,48 +20,52 @@ sealed abstract class BTree[+T] {
     */
   def size: Int
 
-  def collectNodes(level: Int): List[BTree[T]]
+  def collectNodes(level: Int): List[Tree[T]]
 
-  def mirror: BTree[T]
+  def mirror: Tree[T]
 
-  def sameShapeAs[S >: T](that: BTree[S]): Boolean
+  def sameShapeAs[S >: T](that: Tree[S]): Boolean
 
   def isSymmetrical: Boolean
+
+  def toList: List[T]
 }
 
-case object BEnd extends BTree[Nothing] {
-  override def value: Nothing        = throw new NoSuchElementException
-  override def left: BTree[Nothing]  = throw new NoSuchElementException
-  override def right: BTree[Nothing] = throw new NoSuchElementException
-  override def isEmpty: Boolean      = true
+case object End extends Tree[Nothing] {
+  override def value: Nothing       = throw new NoSuchElementException
+  override def left: Tree[Nothing]  = throw new NoSuchElementException
+  override def right: Tree[Nothing] = throw new NoSuchElementException
+  override def isEmpty: Boolean     = true
 
-  override def isLeaf: Boolean                     = false
-  override def collectLeaves: List[BTree[Nothing]] = List.empty
-  override def leafCount                           = 0
+  override def isLeaf: Boolean                    = false
+  override def collectLeaves: List[Tree[Nothing]] = List.empty
+  override def leafCount                          = 0
 
   override val size: Int = 0
 
-  override def collectNodes(level: Int): List[BTree[Nothing]] = List.empty
+  override def collectNodes(level: Int): List[Tree[Nothing]] = List.empty
 
-  override def mirror: BTree[Nothing] = BEnd
+  override def mirror: Tree[Nothing] = End
 
-  override def sameShapeAs[S >: Nothing](that: BTree[S]): Boolean = that.isEmpty
+  override def sameShapeAs[S >: Nothing](that: Tree[S]): Boolean = that.isEmpty
 
   override def isSymmetrical = true
+
+  override def toList: List[Nothing] = List.empty
 }
 
-case class BNode[+T](
+case class Node[+T](
     override val value: T,
-    override val left: BTree[T],
-    override val right: BTree[T]
-) extends BTree[T] {
+    override val left: Tree[T],
+    override val right: Tree[T]
+) extends Tree[T] {
   override def isEmpty: Boolean = false
 
   override def isLeaf: Boolean = left.isEmpty && right.isEmpty
 
-  override def collectLeaves: List[BTree[T]] = {
+  override def collectLeaves: List[Tree[T]] = {
     @tailrec
-    def recurse(queue: List[BTree[T]], leaves: List[BTree[T]]): List[BTree[T]] = {
+    def recurse(queue: List[Tree[T]], leaves: List[Tree[T]]): List[Tree[T]] = {
       if (queue.isEmpty) leaves
       else if (queue.head.isEmpty) recurse(queue.tail, leaves)
       else if (queue.head.isLeaf) recurse(queue.tail, queue.head :: leaves)
@@ -75,7 +79,7 @@ case class BNode[+T](
 
   // override def size: Int = {
   //   @tailrec
-  //   def recurse(queue: List[BTree[T]], count: Int): Int = {
+  //   def recurse(queue: List[Tree[T]], count: Int): Int = {
   //     if (queue.isEmpty) count
   //     else if (queue.head.isEmpty) recurse(queue.tail, count)
   //     else recurse(queue.head.left :: queue.head.right :: queue.tail, count + 1)
@@ -86,9 +90,9 @@ case class BNode[+T](
 
   override val size: Int = 1 + left.size + right.size
 
-  // override def collectNodes(level: Int): List[BTree[T]] = {
+  // override def collectNodes(level: Int): List[Tree[T]] = {
   //   @tailrec
-  //   def recurse(queue: List[(BTree[T], Int)], acc: List[BTree[T]]): List[BTree[T]] = {
+  //   def recurse(queue: List[(Tree[T], Int)], acc: List[Tree[T]]): List[Tree[T]] = {
   //     if (queue.isEmpty) acc
   //     else if (queue.head._1.isEmpty) recurse(queue.tail, acc)
   //     else if (queue.head._2 > level) recurse(queue.tail, acc)
@@ -103,9 +107,9 @@ case class BNode[+T](
   //   recurse(List((this, 0)), List.empty)
   // }
 
-  override def collectNodes(level: Int): List[BTree[T]] = {
+  override def collectNodes(level: Int): List[Tree[T]] = {
     @tailrec
-    def recurse(currentLevel: Int, currentNodes: List[BTree[T]]): List[BTree[T]] = {
+    def recurse(currentLevel: Int, currentNodes: List[Tree[T]]): List[Tree[T]] = {
       if (currentNodes.isEmpty) List.empty
       else if (currentLevel == level) currentNodes
       else {
@@ -121,21 +125,21 @@ case class BNode[+T](
     recurse(0, List(this))
   }
 
-  override def mirror: BTree[T] = {
-    // def recurse(node: BTree[T]): BTree[T] = {
-    //   if (node.isEmpty) BEnd
+  override def mirror: Tree[T] = {
+    // def recurse(node: Tree[T]): Tree[T] = {
+    //   if (node.isEmpty) End
     //   else if (node.isLeaf) node
     //   else {
     //     val left  = node.left
     //     val right = node.right
-    //     BNode(node.value, recurse(right), recurse(left))
+    //     Node(node.value, recurse(right), recurse(left))
     //   }
     // }
 
     // recurse(this)
 
     @tailrec
-    def mirrorTailrec(todo: List[BTree[T]], expanded: Set[BTree[T]], done: List[BTree[T]]): BTree[T] = {
+    def mirrorTailrec(todo: List[Tree[T]], expanded: Set[Tree[T]], done: List[Tree[T]]): Tree[T] = {
       if (todo.isEmpty) done.head
       else {
         val node = todo.head
@@ -146,7 +150,7 @@ case class BNode[+T](
         } else {
           val newLeft  = done.head
           val newRight = done.tail.head
-          val newNode  = BNode(node.value, newLeft, newRight)
+          val newNode  = Node(node.value, newLeft, newRight)
           mirrorTailrec(todo.tail, expanded, newNode :: done.drop(2))
         }
       }
@@ -155,9 +159,9 @@ case class BNode[+T](
     mirrorTailrec(List(this), Set.empty, List.empty)
   }
 
-  override def sameShapeAs[S >: T](that: BTree[S]): Boolean = {
+  override def sameShapeAs[S >: T](that: Tree[S]): Boolean = {
     @tailrec
-    def recurse(queue: List[(BTree[T], BTree[S])]): Boolean = {
+    def recurse(queue: List[(Tree[T], Tree[S])]): Boolean = {
       if (queue.isEmpty) true
       else {
         val thisTree = queue.head._1
@@ -176,11 +180,13 @@ case class BNode[+T](
   }
 
   override def isSymmetrical: Boolean = sameShapeAs(this.mirror)
+
+  override def toList: List[T] = ???
 }
 
 object BinaryTreeProblems extends App {
   val tree0 =
-    BNode(10, BNode(8, BNode(5, BEnd, BEnd), BNode(9, BEnd, BEnd)), BNode(12, BNode(11, BEnd, BEnd), BEnd))
+    Node(10, Node(8, Node(5, End, End), Node(9, End, End)), Node(12, Node(11, End, End), End))
 
   println(tree0.isLeaf)        // false
   println(tree0.collectLeaves) // 5, 9, 11
@@ -188,7 +194,7 @@ object BinaryTreeProblems extends App {
 
   println(tree0.size)
 
-  val degenerate = (1 to 100000).foldLeft[BTree[Int]](BEnd)((tree, number) => BNode(number, tree, BEnd))
+  val degenerate = (1 to 100000).foldLeft[Tree[Int]](End)((tree, number) => Node(number, tree, End))
   println(degenerate.size)
 
   println(tree0.collectNodes(0))        // 10

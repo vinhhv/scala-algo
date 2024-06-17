@@ -14,6 +14,11 @@ sealed abstract class BTree[+T] {
   def isLeaf: Boolean
   def collectLeaves: List[BTree[T]]
   def leafCount: Int
+
+  /**
+    *  Medium problems
+    */
+  def size: Int
 }
 
 case object BEnd extends BTree[Nothing] {
@@ -25,6 +30,8 @@ case object BEnd extends BTree[Nothing] {
   override def isLeaf: Boolean                     = false
   override def collectLeaves: List[BTree[Nothing]] = List.empty[BTree[Nothing]]
   override def leafCount                           = 0
+
+  override val size: Int = 0
 }
 
 case class BNode[+T](
@@ -49,6 +56,19 @@ case class BNode[+T](
   }
 
   override def leafCount: Int = collectLeaves.length
+
+  // override def size: Int = {
+  //   @tailrec
+  //   def recurse(queue: List[BTree[T]], count: Int): Int = {
+  //     if (queue.isEmpty) count
+  //     else if (queue.head.isEmpty) recurse(queue.tail, count)
+  //     else recurse(queue.head.left :: queue.head.right :: queue.tail, count + 1)
+  //   }
+
+  //   recurse(List(this), 0)
+  // }
+
+  override val size: Int = 1 + left.size + right.size
 }
 
 object BinaryTreeProblems extends App {
@@ -58,4 +78,9 @@ object BinaryTreeProblems extends App {
   println(tree0.isLeaf)        // false
   println(tree0.collectLeaves) // 5, 9, 11
   println(tree0.leafCount)     // 3
+
+  println(tree0.size)
+
+  val degenerate = (1 to 100000).foldLeft[BTree[Int]](BEnd)((tree, number) => BNode(number, tree, BEnd))
+  println(degenerate.size)
 }

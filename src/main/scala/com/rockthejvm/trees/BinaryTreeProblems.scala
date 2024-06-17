@@ -74,21 +74,39 @@ case class BNode[+T](
 
   override val size: Int = 1 + left.size + right.size
 
+  // override def collectNodes(level: Int): List[BTree[T]] = {
+  //   @tailrec
+  //   def recurse(queue: List[(BTree[T], Int)], acc: List[BTree[T]]): List[BTree[T]] = {
+  //     if (queue.isEmpty) acc
+  //     else if (queue.head._1.isEmpty) recurse(queue.tail, acc)
+  //     else if (queue.head._2 > level) recurse(queue.tail, acc)
+  //     else if (queue.head._2 == level) recurse(queue.tail, queue.head._1 :: acc)
+  //     else {
+  //       val node  = queue.head._1
+  //       val level = queue.head._2
+  //       recurse((node.left, level + 1) :: (node.right, level + 1) :: queue.tail, acc)
+  //     }
+  //   }
+
+  //   recurse(List((this, 0)), List.empty)
+  // }
+
   override def collectNodes(level: Int): List[BTree[T]] = {
     @tailrec
-    def recurse(queue: List[(BTree[T], Int)], acc: List[BTree[T]]): List[BTree[T]] = {
-      if (queue.isEmpty) acc
-      else if (queue.head._1.isEmpty) recurse(queue.tail, acc)
-      else if (queue.head._2 > level) recurse(queue.tail, acc)
-      else if (queue.head._2 == level) recurse(queue.tail, queue.head._1 :: acc)
+    def recurse(currentLevel: Int, currentNodes: List[BTree[T]]): List[BTree[T]] = {
+      if (currentNodes.isEmpty) List.empty
+      else if (currentLevel == level) currentNodes
       else {
-        val node  = queue.head._1
-        val level = queue.head._2
-        recurse((node.left, level + 1) :: (node.right, level + 1) :: queue.tail, acc)
+        val expandedNodes = for {
+          node  <- currentNodes
+          child <- List(node.left, node.right) if !child.isEmpty
+        } yield child
+
+        recurse(currentLevel + 1, expandedNodes)
       }
     }
 
-    recurse(List((this, 0)), List.empty)
+    recurse(0, List(this))
   }
 }
 

@@ -1,6 +1,7 @@
 package com.rockthejvm.trees
 
 import scala.annotation.tailrec
+import scala.collection.immutable.Queue
 
 sealed abstract class Tree[+T] {
   def value: T
@@ -181,7 +182,48 @@ case class Node[+T](
 
   override def isSymmetrical: Boolean = sameShapeAs(this.mirror)
 
-  override def toList: List[T] = ???
+  /**
+    * Options:
+    *
+    * pre-order
+    * in-order
+    * post-order
+    * per-level
+    */
+  override def toList: List[T] = {
+    @tailrec
+    def recurse(
+        queue: List[Tree[T]],
+        visited: Set[Tree[T]] = Set.empty[Tree[T]],
+        list: List[T] = List.empty[T]
+    ): List[T] = {
+      if (queue.isEmpty) list.reverse
+      else {
+        val node = queue.head
+        if (node.isEmpty) recurse(queue.tail, visited, list)
+        else if (node.isLeaf || visited.contains(node)) recurse(queue.tail, visited, node.value :: list)
+        // swap node position to switch between pre-order, in-order and post-order
+        else recurse(node.left :: node.right :: node :: queue.tail, visited + node, list)
+      }
+    }
+
+    @tailrec
+    def perLevelR(queue: List[Tree[T]], list: Queue[T] = Queue.empty[T]): List[T] = {
+      if (queue.isEmpty) list.toList
+      else {
+        val node = queue.head
+        if (node.isEmpty) perLevelR(queue.tail, list)
+        else {
+          val newQueue = queue.flatMap(node => List(node.left, node.right).filter(!_.isEmpty))
+          val newList  = list ++ queue.map(_.value)
+          perLevelR(newQueue, newList)
+        }
+      }
+    }
+
+    // recurse(List(this))
+    perLevelR(List(this))
+  }
 }
 
 object BinaryTreeProblems extends App {
@@ -208,4 +250,6 @@ object BinaryTreeProblems extends App {
   println(tree0.mirror)
   println(tree0.sameShapeAs(tree0))        // true
   println(tree0.sameShapeAs(tree0.mirror)) // false
+
+  println(tree0.toList)
 }

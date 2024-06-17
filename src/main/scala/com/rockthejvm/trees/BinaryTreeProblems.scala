@@ -21,6 +21,8 @@ sealed abstract class BTree[+T] {
   def size: Int
 
   def collectNodes(level: Int): List[BTree[T]]
+
+  def mirror: BTree[T]
 }
 
 case object BEnd extends BTree[Nothing] {
@@ -36,6 +38,8 @@ case object BEnd extends BTree[Nothing] {
   override val size: Int = 0
 
   override def collectNodes(level: Int): List[BTree[Nothing]] = List.empty
+
+  override def mirror: BTree[Nothing] = BEnd
 }
 
 case class BNode[+T](
@@ -108,6 +112,40 @@ case class BNode[+T](
 
     recurse(0, List(this))
   }
+
+  override def mirror: BTree[T] = {
+    // def recurse(node: BTree[T]): BTree[T] = {
+    //   if (node.isEmpty) BEnd
+    //   else if (node.isLeaf) node
+    //   else {
+    //     val left  = node.left
+    //     val right = node.right
+    //     BNode(node.value, recurse(right), recurse(left))
+    //   }
+    // }
+
+    // recurse(this)
+
+    @tailrec
+    def mirrorTailrec(todo: List[BTree[T]], expanded: Set[BTree[T]], done: List[BTree[T]]): BTree[T] = {
+      if (todo.isEmpty) done.head
+      else {
+        val node = todo.head
+        if (node.isEmpty || node.isLeaf) {
+          mirrorTailrec(todo.tail, expanded, node :: done)
+        } else if (!expanded.contains(node)) {
+          mirrorTailrec(node.left :: node.right :: todo, expanded + node, done)
+        } else {
+          val newLeft  = done.head
+          val newRight = done.tail.head
+          val newNode  = BNode(node.value, newLeft, newRight)
+          mirrorTailrec(todo.tail, expanded, newNode :: done.drop(2))
+        }
+      }
+    }
+
+    mirrorTailrec(List(this), Set.empty, List.empty)
+  }
 }
 
 object BinaryTreeProblems extends App {
@@ -129,4 +167,7 @@ object BinaryTreeProblems extends App {
   println(tree0.collectNodes(1).length) // 8, 12
   println(tree0.collectNodes(2))        // 5, 9, 11
   println(tree0.collectNodes(2).length) // 5, 9, 11
+  println(tree0.collectNodes(9))
+
+  println(tree0.mirror)
 }

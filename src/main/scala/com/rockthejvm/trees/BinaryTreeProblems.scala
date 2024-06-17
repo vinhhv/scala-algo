@@ -1,5 +1,7 @@
 package com.rockthejvm.trees
 
+import scala.annotation.tailrec
+
 sealed abstract class BTree[+T] {
   def value: T
   def left: BTree[T]
@@ -19,12 +21,41 @@ case object BEnd extends BTree[Nothing] {
   override def left: BTree[Nothing]  = throw new NoSuchElementException
   override def right: BTree[Nothing] = throw new NoSuchElementException
   override def isEmpty: Boolean      = true
+
+  override def isLeaf: Boolean                     = false
+  override def collectLeaves: List[BTree[Nothing]] = List.empty[BTree[Nothing]]
+  override def leafCount                           = 0
 }
 
 case class BNode[+T](
     override val value: T,
     override val left: BTree[T],
     override val right: BTree[T]
-) extends BTree[T] {}
+) extends BTree[T] {
+  override def isEmpty: Boolean = false
 
-object BinaryTreeProblems extends App {}
+  override def isLeaf: Boolean = left.isEmpty && right.isEmpty
+
+  override def collectLeaves: List[BTree[T]] = {
+    @tailrec
+    def recurse(queue: List[BTree[T]], leaves: List[BTree[T]]): List[BTree[T]] = {
+      if (queue.isEmpty) leaves
+      else if (queue.head.isEmpty) recurse(queue.tail, leaves)
+      else if (queue.head.isLeaf) recurse(queue.tail, queue.head :: leaves)
+      else recurse(queue.head.left :: queue.head.right :: queue.tail, leaves)
+    }
+
+    recurse(List(this), List.empty)
+  }
+
+  override def leafCount: Int = collectLeaves.length
+}
+
+object BinaryTreeProblems extends App {
+  val tree0 =
+    BNode(10, BNode(8, BNode(5, BEnd, BEnd), BNode(9, BEnd, BEnd)), BNode(12, BNode(11, BEnd, BEnd), BEnd))
+
+  println(tree0.isLeaf)        // false
+  println(tree0.collectLeaves) // 5, 9, 11
+  println(tree0.leafCount)     // 3
+}

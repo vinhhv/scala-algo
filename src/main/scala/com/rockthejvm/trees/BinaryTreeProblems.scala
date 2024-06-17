@@ -23,6 +23,10 @@ sealed abstract class BTree[+T] {
   def collectNodes(level: Int): List[BTree[T]]
 
   def mirror: BTree[T]
+
+  def sameShapeAs[S >: T](that: BTree[S]): Boolean
+
+  def isSymmetrical: Boolean
 }
 
 case object BEnd extends BTree[Nothing] {
@@ -40,6 +44,10 @@ case object BEnd extends BTree[Nothing] {
   override def collectNodes(level: Int): List[BTree[Nothing]] = List.empty
 
   override def mirror: BTree[Nothing] = BEnd
+
+  override def sameShapeAs[S >: Nothing](that: BTree[S]): Boolean = that.isEmpty
+
+  override def isSymmetrical = true
 }
 
 case class BNode[+T](
@@ -146,6 +154,28 @@ case class BNode[+T](
 
     mirrorTailrec(List(this), Set.empty, List.empty)
   }
+
+  override def sameShapeAs[S >: T](that: BTree[S]): Boolean = {
+    @tailrec
+    def recurse(queue: List[(BTree[T], BTree[S])]): Boolean = {
+      if (queue.isEmpty) true
+      else {
+        val thisTree = queue.head._1
+        val thatTree = queue.head._2
+
+        if (thisTree.isEmpty && thatTree.isEmpty) recurse(queue.tail)
+        else if (!thisTree.isEmpty && !thatTree.isEmpty) {
+          val leftTrees  = (thisTree.left, thatTree.left)
+          val rightTrees = (thisTree.right, thatTree.right)
+          recurse(leftTrees :: rightTrees :: queue.tail)
+        } else false
+      }
+    }
+
+    return recurse(List((this, that)))
+  }
+
+  override def isSymmetrical: Boolean = sameShapeAs(this.mirror)
 }
 
 object BinaryTreeProblems extends App {
@@ -170,4 +200,6 @@ object BinaryTreeProblems extends App {
   println(tree0.collectNodes(9))
 
   println(tree0.mirror)
+  println(tree0.sameShapeAs(tree0))        // true
+  println(tree0.sameShapeAs(tree0.mirror)) // false
 }

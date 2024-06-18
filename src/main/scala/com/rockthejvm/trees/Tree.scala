@@ -226,6 +226,12 @@ case class Node[+T](
   }
 }
 
+object Tree {
+  def apply[T](): Tree[T]                                        = End
+  def apply[T](value: T): Tree[T]                                = Node(value, End, End)
+  def apply[T](value: T, left: Tree[T], right: Tree[T]): Tree[T] = Node(value, left, right)
+}
+
 object BinaryTreeProblems extends App {
   val tree0 =
     Node(10, Node(8, Node(5, End, End), Node(9, End, End)), Node(12, Node(11, End, End), End))

@@ -3,9 +3,9 @@ package com.rockthejvm.graphs
 import scala.collection.immutable.Queue
 import scala.annotation.tailrec
 
-object GraphProblems extends App {
+type Graph[T] = Map[T, Set[T]]
 
-  type Graph[T] = Map[T, Set[T]]
+object GraphProblems {
 
   val socialNetwork: Graph[String] = Map(
     "Alice"   -> Set("Bob", "Charlie", "David"),
@@ -162,20 +162,22 @@ object GraphProblems extends App {
     recurse(nodesOrdered, 0, Map())
   }
 
-  println(outDegree(socialNetwork, "Alice")) // 3
-  println(inDegree(socialNetwork, "David"))  // 2
+  def main(args: List[String]): Unit = {
+    println(outDegree(socialNetwork, "Alice")) // 3
+    println(inDegree(socialNetwork, "David"))  // 2
 
-  println(isPath(socialNetwork, "Alice", "Mary")) // true
-  println(isPath(socialNetwork, "Vinh", "Alice")) // false
+    println(isPath(socialNetwork, "Alice", "Mary")) // true
+    println(isPath(socialNetwork, "Vinh", "Alice")) // false
 
-  println(findPath(socialNetwork, "Alice", "Mary")) // true
-  println(findPath(socialNetwork, "Mary", "Alice")) // false
+    println(findPath(socialNetwork, "Alice", "Mary")) // true
+    println(findPath(socialNetwork, "Mary", "Alice")) // false
 
-  println(findCycle(socialNetwork, "Alice"))
+    println(findCycle(socialNetwork, "Alice"))
 
-  println(makeUndirected(socialNetwork))
-  println(makeUndirected(socialNetwork)("Bob"))
-  println(makeUndirected(numbersNetwork))
+    println(makeUndirected(socialNetwork))
+    println(makeUndirected(socialNetwork)("Bob"))
+    println(makeUndirected(numbersNetwork))
 
-  println(color(numNetwork))
+    println(color(numNetwork))
+  }
 }

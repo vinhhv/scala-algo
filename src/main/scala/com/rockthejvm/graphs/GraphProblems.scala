@@ -24,6 +24,16 @@ object GraphProblems extends App {
     'J' -> Set('Z')
   )
 
+  val numNetwork: Graph[Int] = Map(
+    1 -> Set(2),
+    2 -> Set(3),
+    3 -> Set(4),
+    4 -> Set(5),
+    5 -> Set(6),
+    6 -> Set(7),
+    7 -> Set(1)
+  )
+
   // number of nodes this node `node` is associated (adjacent) to
   def outDegree[T](graph: Graph[T], node: T): Int =
     graph.getOrElse(node, Set.empty).size
@@ -127,6 +137,31 @@ object GraphProblems extends App {
 
   def findCycle[T](graph: Graph[T], node: T): List[T] = findPath(graph, node, node)
 
+  def color[T](graph: Graph[T]): Map[T, Int] = {
+    val undirected = makeUndirected(graph)
+
+    @tailrec
+    def recurse(remainingNodes: List[T], currentColor: Int, colorings: Map[T, Int]): Map[T, Int] = {
+      if (remainingNodes.isEmpty) colorings
+      else {
+        val node = remainingNodes.head
+        if (colorings.contains(node)) recurse(remainingNodes.tail, currentColor, colorings)
+        else {
+          val uncoloredNodes = remainingNodes.tail.foldLeft[Set[T]](Set(node)) { (nodesToBeColored, n) =>
+            val allNeighbors = nodesToBeColored.flatMap(nodeToBeColored => undirected(nodeToBeColored))
+            if (colorings.contains(n) || allNeighbors.contains(n)) nodesToBeColored
+            else nodesToBeColored + n
+          }
+          val newColorings = uncoloredNodes.map((_, currentColor)).toMap
+          recurse(remainingNodes.tail, currentColor + 1, colorings ++ newColorings)
+        }
+      }
+    }
+
+    val nodesOrdered = undirected.keySet.toList.sortWith((a, b) => outDegree(undirected, a) > outDegree(undirected, b))
+    recurse(nodesOrdered, 0, Map())
+  }
+
   println(outDegree(socialNetwork, "Alice")) // 3
   println(inDegree(socialNetwork, "David"))  // 2
 
@@ -141,4 +176,6 @@ object GraphProblems extends App {
   println(makeUndirected(socialNetwork))
   println(makeUndirected(socialNetwork)("Bob"))
   println(makeUndirected(numbersNetwork))
+
+  println(color(numNetwork))
 }
